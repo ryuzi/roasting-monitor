@@ -1,78 +1,101 @@
-# Google Apps Script for Coffee Roasting Data Logging
+# Google Apps Script: Data Insertion into Google Spreadsheet
 
-This Google Apps Script is designed to receive data from a Raspberry Pi Pico W during a coffee roasting process. The data is sent via HTTP POST requests and logged into a Google Spreadsheet. The script processes the incoming data, validates it, and records the timestamp, temperature, rate of rise (RoR), and additional notes into the spreadsheet.
+This project allows data to be sent to a specified Google Spreadsheet via a POST request. The data includes a timestamp, temperature, rate of rise (ror), and a note, which are inserted into a specific sheet within the spreadsheet.
 
-## Features
+## Table of Contents
 
-- **Data Reception**: Receives JSON data via HTTP POST requests from a Raspberry Pi Pico W.
-- **Data Validation**: Validates the structure and content of the incoming data.
-- **Timestamp Conversion**: Converts UNIX timestamps to human-readable date and time format.
-- **Google Spreadsheet Logging**: Logs the validated data into a Google Spreadsheet for analysis and record-keeping.
-
-## Prerequisites
-
-- **Google Account**: You need a Google account to create and deploy Google Apps Script.
-- **Google Spreadsheet**: Create a Google Spreadsheet where the data will be logged.
-- **Google Apps Script**: Access to the Google Apps Script editor to paste and deploy the script.
+- [Setup](#setup)
+- [Usage](#usage)
+- [Example POST Request](#example-post-request)
+- [Error Handling](#error-handling)
+- [License](#license)
 
 ## Setup
 
 ### 1. Create a Google Spreadsheet
 
-- Create a new Google Spreadsheet in your Google Drive.
-- Rename the first sheet to "Data" (or your preferred name).
+1. Create a new Google Spreadsheet.
+2. Note the spreadsheet ID, which is found in the URL:
+   ```
+   https://docs.google.com/spreadsheets/d/your-spreadsheet-id/edit
+   ```
+3. Rename or create a sheet within the spreadsheet where data will be added (e.g., `DataSheet`).
 
-### 2. Open Google Apps Script
+### 2. Create a Google Apps Script
 
-- In your Google Spreadsheet, click on `Extensions > Apps Script`.
-- This will open the Google Apps Script editor.
+1. In the Google Spreadsheet, go to `Extensions > Apps Script`.
+2. Replace any code in the script editor with the provided Google Apps Script code.
+3. Set the `sheetId` variable in the script to your spreadsheet ID.
+4. Set the `sheetName` variable to the name of the sheet where data will be added.
+5. Save your project.
 
-### 3. Copy and Paste the Script
+### 3. Deploy the Script as a Web App
 
-- Copy the provided GAS code and paste it into the script editor, replacing any existing code.
-- Make sure the script is named appropriately (e.g., `Code.gs`).
-
-### 4. Deploy as a Web App
-
-- Click on `Deploy > Test deployments` to ensure the script works as expected.
-- Once tested, click on `Deploy > Manage deployments`.
-- Select `New Deployment` and choose `Web app` as the deployment type.
-- Set the `Who has access` option to `Anyone` (or as required for your use case).
-- Click `Deploy` and copy the URL provided. This will be used in your Raspberry Pi Pico W project.
-
-### 5. Update Raspberry Pi Pico W Code
-
-- Update the Raspberry Pi Pico W project with the deployment URL from the previous step.
-- The Pico W will send data to this URL using HTTP POST requests.
+1. In the Apps Script editor, go to `Deploy > Manage Deployments`.
+2. Choose `New Deployment`.
+3. Select `Web App`.
+4. Set `Execute as` to `Me`.
+5. Set `Who has access` to `Anyone` (or the appropriate level of access).
+6. Click `Deploy` and copy the Web App URL.
 
 ## Usage
 
-- **Receiving Data**: The script listens for HTTP POST requests containing JSON data from the Raspberry Pi Pico W.
-- **Logging Data**: Once data is received and validated, it is automatically logged into the specified Google Spreadsheet.
-- **Data Format**: The script expects data in the following format:
+To send data to the Google Spreadsheet, make a POST request to the Web App URL. The request should contain a JSON object with the data to be inserted.
+
+### Data Format
+
+The JSON object should have the following structure:
 
 ```json
 {
   "data": [
     {
-      "time": 1697231231,
-      "temp": 200.5,
-      "ror": 5.2,
-      "note": "First Crack"
+      "time": 1723620204,
+      "temp": 25.75,
+      "ror": 0.1,
+      "note": "Example note"
     },
-    ...
+    {
+      "time": 1723620205,
+      "temp": 25.625,
+      "ror": 0.2,
+      "note": "Another note"
+    }
   ]
 }
 ```
 
-- **Spreadsheet Columns**:
-  - **Column A**: Timestamp (formatted as `yyyy-MM-dd HH:mm:ss`)
-  - **Column B**: Temperature (°C)
-  - **Column C**: Rate of Rise (RoR)
-  - **Column D**: Note
+- `time`: UNIX timestamp (in seconds).
+- `temp`: Temperature value (number).
+- `ror`: Rate of rise (number).
+- `note`: Any additional information (string).
 
-## Troubleshooting
+## Example POST Request
 
-- **Invalid Data**: If the data structure doesn't match the expected format, the script will return `Invalid Data`.
-- **Error Handling**: Any errors during the script execution are logged in the Google Apps Script Logger.
-- **No Data Logged**: Ensure that the data sent from the Raspberry Pi Pico W matches the expected JSON format.
+Here is an example of how to send a POST request using Python:
+
+```python
+import urequests
+import ujson
+
+url = 'YOUR_WEB_APP_URL_HERE'  # Replace with your Web App URL
+data = {
+    "data": [
+        {"time": 1723620204, "temp": 25.75, "ror": 0.1, "note": "Example note"},
+        {"time": 1723620205, "temp": 25.625, "ror": 0.2, "note": "Another note"}
+    ]
+}
+
+response = urequests.post(url, data=ujson.dumps(data), headers={'Content-Type': 'application/json'})
+print(response.text)
+```
+
+## Error Handling
+
+- **Invalid Data**: If the data structure is incorrect or required fields are missing, the script will return an "Invalid Data" response and log the issue.
+- **Sheet Not Found**: If the specified sheet is not found in the spreadsheet, the script will return an error message and log the issue.
+- **Other Errors**: Any other errors that occur during the execution of the script will be logged, and a corresponding error message will be returned.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
