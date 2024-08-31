@@ -52,6 +52,7 @@ function processPostData(postData) {
   var rows = [];
   var minTimestamp = Infinity;
   var maxTimestamp = -Infinity;
+  var startRecording = false;
 
   if (postData && postData.data && Array.isArray(postData.data)) {
     for (let entry of postData.data) {
@@ -60,8 +61,14 @@ function processPostData(postData) {
         minTimestamp = Math.min(minTimestamp, timestamp);
         maxTimestamp = Math.max(maxTimestamp, timestamp);
 
-        var formattedDate = formatTimestamp(timestamp);
-        rows.push([formattedDate, entry.temp, entry.ror, '', entry.note]);
+        if (entry.note === 'Charge') {
+          startRecording = true;
+        }
+
+        if (startRecording) {
+          var formattedDate = formatTimestamp(timestamp);
+          rows.push([formattedDate, entry.temp, entry.ror, '', entry.note]);
+        }
       }
     }
   } else {
@@ -97,7 +104,6 @@ function processFormData(formData, minTimestamp, maxTimestamp) {
     if (formTimestamp < minTimestamp || formTimestamp > maxTimestamp) continue;
 
     var formattedDate = formatTimestamp(formTimestamp);
-
     rows.push([formattedDate, '', '', gasPressure, '']);
   }
   return rows;
